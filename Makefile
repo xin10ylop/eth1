@@ -4,6 +4,7 @@ START   ?= 2025-05-01
 END     ?= $(shell date -u -d yesterday +%F)
 VARIANT ?= spot
 T       ?= 2026-10-15 13:37
+BTC_HOLDOUT ?= ../btc-predict/reports/holdout
 
 .PHONY: help install test live replay data features train calibrate reports parity skew refresh clean-cache
 
@@ -32,8 +33,8 @@ features:        ## per-second bars -> minute panel, targets, model matrices
 	$(PY) -m ethpredict.features.subminute $(START) $(END)
 	$(PY) scripts/pipeline/build_features.py $(START) $(END)
 
-train:           ## holdout walk-forward + production models (~3 h)
-	$(PY) scripts/pipeline/train_final.py --variants full,spot
+train:           ## holdout walk-forward + production models (~2 h; run nothing else heavy meanwhile: ~7 GB RAM)
+	$(PY) scripts/pipeline/train_final.py --variants full,spot --fast_from 2
 
 calibrate:       ## regime-aware bands/hit tables + compress models for git
 	$(PY) scripts/pipeline/add_regime_calibration.py
@@ -44,6 +45,7 @@ reports:         ## results table, charts, edge-vs-costs from cached holdout pre
 	$(PY) scripts/reports/make_report.py --pattern "final_full_{key}_holdout" --keys s1,f1,s5,f5,s2,f2 --tag holdout
 	$(PY) scripts/reports/make_report.py --pattern "final_full_{key}_holdout" --keys s10s,f10s,s15s,f15s --tag holdout_sub
 	$(PY) scripts/reports/edge_vs_costs.py s10s,f10s,s15s,f15s,s1,f1,s5,f5
+	$(PY) scripts/reports/compare_btc.py $(BTC_HOLDOUT)
 
 parity:          ## prove live feature path == training features and scores
 	$(PY) scripts/live/check_live_parity.py 5

@@ -73,8 +73,9 @@ data/, logs/           local only (not in git): per-second data, feature matrice
     * Check with `make parity` and `make skew`.
 11. **ETH is not BTC.**
     * ETH *leads* BTC at 1 s and 1 min, so BTC features help ETH little.
-    * ETH is less predictable than BTC in IC terms, but it moves ~1.56× more, so its edge in bp
-      is similar or larger.
+    * ETH is less predictable than BTC in IC and hit-rate terms. It moves more (ETH/BTC
+      volatility ~2× in mid-2025, ~1.35× in 2026), which narrows but no longer closes the gap in
+      bp edge.
     * The "large trade" threshold is 25 ETH (`LARGE_QTY`), like-for-like with 1 BTC.
     * Details are in `docs/FINDINGS.md` §0.
 
@@ -128,7 +129,13 @@ are the same (`eth`, `ethum`, `spot`, `um`, alts, `eth_premium`, `ethusdc`, `coi
   in `live/sources.py`, then run `make parity` and `make skew`.
 
 ## 7. Key results to know (holdout, full model; details in README)
-RESULTS_PLACEHOLDER
+* Hit rate: spot +10s **59.5%**, spot +1m **54.9%**, perp +1m **53.0%**, spot +5m **52.6%**,
+  perp +5m **52.2%**. The spot-only variant reaches 57.5% / 54.2% / 52.5%.
+* The top-10% most confident calls hit 56–72%.
+* All 126 target-months have positive IC.
+* BTC (btc-predict) is ahead on every hit rate. ETH ties it in bp edge only at 10–15 s.
+* The holdout was calm (ETH 1-min vol 6.9 bp vs 9.5 bp on DEV). Predictability roughly halves
+  in the high-vol tercile.
 
 ## 8. Known limits
 * The full variant could not be live-tested from the build environment (futures REST

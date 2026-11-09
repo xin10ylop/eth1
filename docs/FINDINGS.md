@@ -26,7 +26,7 @@ code and data handling.
 | ETH prices are less efficient (more autocorrelation) | lag-1 autocorrelation and variance ratios from 1 s to 15 min, 363 days | **No.** BTC deviates more from a random walk at every scale up to 30 s. 1 s autocorrelation: BTC 0.118, ETH 0.089, and ETH is larger in 0 of 12 months. VR(60 s): 1.59 vs 1.35. |
 | ETH 1-min returns have more structure | permutation entropy (order 3) of 1-min returns | **No.** ETH is closer to pure noise in 10 of 12 months (0.99923 vs 0.99888). |
 | ETH has more leverage → stronger continuation after big moves | signed next move after a > 3σ minute | **No.** Spot: BTC +0.059σ, ETH +0.029σ at 1 min; perps are equal (+0.003σ). |
-| ETH's moves are bigger, so a signal is worth more | 1-min volatility, 44 days | **Yes.** ETH 8.9 bp vs BTC 5.7 bp (1.56×). Fees are in bp, so the same IC buys ~1.5× more edge per trade. |
+| ETH's moves are bigger, so a signal is worth more | monthly 1-min volatility, 2025-05 → 2026-11 | **Yes, but shrinking.** ETH/BTC volatility was ~2.0× in mid-2025, 1.38× on the DEV/confirmation months and 1.35× in the holdout. Fees are in bp, so the same IC buys proportionally more edge, but the cushion is now only ~35%. |
 
 **Why ETH is not more predictable at these horizons.** Short-horizon predictability comes almost
 entirely from *lagging* prices catching up with *leading* ones. ETH is the more active market:
@@ -54,8 +54,10 @@ being more predictable intraday.
    significant for ETH.
 3. **At 5 minutes, slow state features** (see §3). Unlike BTC, ETH's 5-minute forecasts improve
    when the model can condition on the day-scale state.
-4. **Economically, the bp edge.** At equal hit rate ETH moves 1.56× more, so its edge in bp is
-   equal to or larger than BTC's despite a lower IC.
+4. **Economically, the bp edge.** ETH moves more per minute, so a lower IC still buys a similar
+   edge in bp. On the DEV months, ETH spot +1 m earned 0.45 bp per forecast vs BTC's 0.43. That
+   cushion has been shrinking with the ETH/BTC volatility ratio (2.0× → 1.35×); see §6 for
+   the holdout.
 
 ## 1. Univariate evidence, ETH vs BTC (pre-holdout months, identical feature code)
 
@@ -182,4 +184,58 @@ effect, not an ETH one, and it needs no special feature.
 The pattern matches BTC's and the same mechanism explains it. Predictability is highest when
 arbitrage between venues is slowest: quiet markets, weekends, and Asia hours.
 
-<!-- holdout, live and skew sections are completed after the final run -->
+## 6. Holdout verdict (frozen May → Oct 2026)
+
+* **All 126 target-months have positive IC** (21 targets × 6 months; the weakest is perp +3 m in
+  one month at 0.012).
+* Full model, holdout:
+
+  | target | hit | IC | top-10% hit |
+  |---|---|---|---|
+  | spot +10 s | 59.5% | 0.145 | 72.3% |
+  | spot +1 m | 54.9% | 0.067 | 62.1% |
+  | spot +5 m | 52.6% | 0.025 | 57.0% |
+  | perp +10 s | 54.9% | 0.080 | 64.0% |
+  | perp +1 m | 53.0% | 0.035 | 58.0% |
+
+* The spot-only variant reaches 57.5% (+10 s), 54.2% (+1 m) and 52.5% (+5 m).
+* **ETH vs BTC on the same months.** BTC is ahead on every hit rate: spot +1 m 56.9% vs 54.9%,
+  perp +1 m 54.4% vs 53.0%.
+  * In bp, ETH ties BTC at 10–15 s (0.40 vs 0.38 bp at spot +10 s).
+  * It trails beyond that (spot +1 m 0.42 vs 0.49 bp).
+  * The DEV-month tie in bp at 1 minute did not carry over, because the ETH/BTC volatility
+    ratio kept falling (1.38× → 1.35×, from ~2× in mid-2025).
+* Like BTC's, the holdout was calmer than the DEV months: ETH 1-min volatility 6.9 bp vs 9.5 bp.
+  Predictability is 2× higher in the low-vol tercile (spot +1 m IC 0.127 vs 0.054), so expect
+  less in stormy months.
+* **The online layer's insurance premium.** At 1 minute the adaptive ensemble was slightly *below*
+  the satellite alone on this holdout:
+  * spot −0.0012, perp −0.0020, both CIs exclude 0;
+  * equal at 10–15 s;
+  * it beat the core everywhere (+0.0015 to +0.013).
+
+  No cross-venue relationship broke during these months, so the layer only paid its premium. It
+  is kept, because the BTC/FDUSD break showed what it is insuring against. That decision was made
+  before the holdout and is not revisited on it.
+* **Latency.** The edge is seconds-scale.
+  * Spot +1 m IC is 0.067 at the bar close, 0.038 at +2 s and 0.025 at +5 s.
+  * Spot +10 s falls from 0.145 to 0.061 at +2 s. The 10–15 s horizons are only worth acting on
+    with sub-second execution.
+  * The CLI delivers at ~3.5 s (fetch at T+2 s, about 1.5 s to fetch and compute).
+
+## 7. Training/serving parity
+
+* `check_live_parity.py` rebuilds 5 random historical minutes through the live code path
+  (`ReplaySource`).
+  * 336 of 340 features match to < 0.2% relative error.
+  * The other 4 are slow volatility features (`lrv5/60/240`, `vol_ratio_fast_slow`). They differ
+    by 1–4% because the live process has 43 h of history to warm up EWMs, not 18 months. BTC
+    shows the same effect.
+  * Model scores: correlation 1.00000, max |Δz| 0.001 (full) / 0.004 (spot).
+* **Perp 1 m klines vs our aggTrade minutes.** Daily volumes are identical, but 293 of 1440
+  minutes differ by up to 250 ETH, in equal-and-opposite pairs in adjacent minutes. An aggregated
+  order that sweeps across a minute boundary carries one timestamp in aggTrades but is split
+  across two minutes in klines. The live path uses klines only for history older than its
+  per-second window. The score parity above shows the effect is negligible.
+
+<!-- live forward test section is completed after the live run -->
