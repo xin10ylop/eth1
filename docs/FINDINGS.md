@@ -123,4 +123,63 @@ Decision (simplest set not worse than everything):
 The satellite beats the core on every target tested (DEV, all p < 0.001, 3/3 months): spot +1 m
 +0.0042, perp +1 m +0.0052, spot +10 s +0.0054, perp +10 s +0.0059.
 
-<!-- sections 3b+ are completed after the confirmation months and holdout -->
+## 3b. Confirmation months (2025-12, 2026-02, 2026-04; never used for a decision)
+
+| target | core | satellite (chosen) | everything (`sat_all`) | satellite − core |
+|---|---|---|---|---|
+| spot +1 m | 0.0453 | 0.0484 | 0.0489 | +0.0031, p < 0.001 |
+| perp +1 m | 0.0250 | 0.0291 | 0.0294 | +0.0042, p = 0.003 |
+| spot +10 s | 0.1027 | 0.1071 | 0.1076 | +0.0044, p < 0.001, 3/3 months |
+| spot +1 m, **spot-only variant** | 0.0285 | **0.0411** | — | **+0.0126**, p < 0.001, 3/3 months |
+
+* The DEV decision holds. The lean satellite is within ±0.0005 of "everything" on every target.
+* For the spot-only variant the satellite matters most. Without futures data, the Coinbase
+  premium and the swarm are the only views of the informed flow that the perp would otherwise
+  show.
+
+## 4. Slow "regime" features at 2–5 minutes: an ETH-specific gain that did not survive
+
+On the DEV months, adding the slow features to the 5-minute models looked like a real
+ETH-specific discovery (BTC showed no such gain). The slow features are 24 h / 12 h returns,
+position in the 24 h range, hour of day, time to funding, beta to BTC, round-number distances,
+240-min flows and the long-window basis.
+
+| DEV months | fast set | full set | Δ |
+|---|---|---|---|
+| spot +5 m, core | 0.0231 | 0.0296 | +0.0065, CI [+0.0006, +0.0122], 3/3 months |
+| perp +5 m, core | 0.0102 | 0.0198 | +0.0096 |
+| perp +5 m, satellite | 0.0111 | 0.0190 | +0.0079 |
+
+The slow features took 47% of the gain importance. Decomposition on DEV: the long-window basis
+alone added +0.0003 and the calendar alone added −0.0011. Only the *whole diffuse set*
+reproduced the gain.
+
+**On the untouched confirmation months the gain vanished:**
+* spot +5 m core: −0.0038, worse in 0 of 3 months;
+* spot +5 m satellite: −0.0021;
+* perp +5 m satellite: −0.0006.
+
+High importance, no single mechanism, and failure out of sample are the signature of memorizing
+the DEV period's day-scale drift. Final rule, the same as BTC's but re-derived on ETH:
+**horizons ≥ 2 min use the `_fast` sets.**
+
+The late-US window (21–24 UTC) does have unusually high 5-min IC on DEV (0.067 vs ~0.025). BTC
+shows the same pattern (0.047–0.069 at 20–24 UTC), so it is a crypto-wide "after the US close"
+effect, not an ETH one, and it needs no special feature.
+
+## 5. When is ETH most predictable? (DEV months, satellite model)
+
+| slice | spot +1 m IC | perp +1 m IC | spot +5 m IC |
+|---|---|---|---|
+| all | 0.057 | 0.029 | 0.030 |
+| low-vol tercile | 0.093 | 0.040 | 0.039 |
+| high-vol tercile | 0.040 | 0.026 | 0.033 |
+| weekend | 0.068 | 0.035 | 0.041 |
+| weekday | 0.055 | 0.027 | 0.026 |
+| Asia 00–08 UTC | 0.067 | 0.031 | 0.024 |
+| US 13–21 UTC | 0.048 | 0.031 | 0.025 |
+
+The pattern matches BTC's and the same mechanism explains it. Predictability is highest when
+arbitrage between venues is slowest: quiet markets, weekends, and Asia hours.
+
+<!-- holdout, live and skew sections are completed after the final run -->

@@ -22,7 +22,11 @@ FAMILIES = {
     "cb": r"^cb_", "xperp": r"^(xp_|x_basis)", "swarm17": r"^swarm2_", "swarm5": r"^alt_", "usdc": r"^book_",
     "btcspot": r"^(e_|be_|E\d|BE\d|levy_es|x_beta|x_resid)", "premium": r"^prem",
 }
-BTC_CORE = open("/home/user/btc-predict/configs/feature_sets/core.txt").read().split() if len(sys.argv) < 2 else []
+# templates vendored from btc-predict (same feature code; ETH-renamed): which columns are degenerate/
+# research-only (absent from btc 'core'), which are slow regime features (core minus core_fast) and
+# which need futures data (core minus spotcore).  configs/feature_sets/research/templates/
+TPL = FEATURE_SETS / "research" / "templates"
+BTC_CORE = (TPL / "btc_core.txt").read_text().split()
 
 
 def fam(c):
@@ -53,8 +57,8 @@ sets["lean_cb_xp_s5"] = sets["core"] + by["cb"] + by["xperp"] + by["swarm5"]
 sets["noswarm"] = [c for c in sets["sat_all"] if fam(c) not in ("swarm5", "swarm17")]
 # 'fast' = minus slow regime features (24h returns, hour-of-day, round numbers...): a property of the
 # feature, not of the asset, so the list is the one btc-predict derived (core minus core_fast)
-bc = open("/home/user/btc-predict/configs/feature_sets/core.txt").read().split()
-bf = set(open("/home/user/btc-predict/configs/feature_sets/core_fast.txt").read().split())
+bc = BTC_CORE
+bf = set((TPL / "btc_core_fast.txt").read_text().split())
 SLOW = {rename.get(c, c) for c in bc if c not in bf}
 for k in ("core", "sat_all", "lean_cb_xp", "lean_cb_xp_s5"):
     sets[f"{k}_fast"] = [c for c in sets[k] if c not in SLOW]
@@ -65,7 +69,7 @@ for k, v in sets.items():
 # ---- PRODUCTION sets (decided on DEV months, see docs/FINDINGS.md):
 #   core = own ETH spot+perp market + perp premium + BTC spot;  sat = core + Coinbase + BTC perp + 5-coin swarm
 #   spot variant = the same minus everything that needs Binance futures data
-bs = open("/home/user/btc-predict/configs/feature_sets/spotcore.txt").read().split()
+bs = (TPL / "btc_spotcore.txt").read_text().split()
 FUT = ({rename.get(c, c) for c in bc if c not in set(bs)} | set(by["xperp"]) | set(by["premium"])
        | {c for c in cols if c.startswith(("f_", "basis", "levy_f", "rv_f_"))})
 prod = {"core": sets["core"], "sat": sets["lean_cb_xp_s5"]}
