@@ -1,0 +1,14 @@
+data/
+models/*.bin
+models/*.pt
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+*.log
+models/*.txt
+!models/*.txt.gz
+logs/
+reports/preds/
+*.egg-info/
+build/
+dist/

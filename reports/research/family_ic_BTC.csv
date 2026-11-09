@@ -1,0 +1,14 @@
+family,n,s10s_best,s10s_med|ic|,s1_best,s1_med|ic|,s5_best,s5_med|ic|,f1_best,f1_med|ic|
+basis,20,basis_dev120z +0.162 (100%),0.1211,basis_dev300z +0.106 (100%),0.0778,basis_dev600z +0.058 (100%),0.0397,basis_lvl -0.009 (75%),0.0051
+swarm17,12,swarm2_breadth3 +0.123 (100%),0.0931,swarm2_breadth10 +0.072 (100%),0.064,swarm2_med3 +0.031 (100%),0.0272,swarm2_breadth3 +0.049 (100%),0.0362
+usdc_book,12,book_btcfdusd_dev60 +0.148 (83%),0.095,book_btcfdusd_dev300 +0.100 (75%),0.0579,book_btcfdusd_dev300 +0.049 (100%),0.0238,book_btcfdusd_dev60 +0.070 (75%),0.0193
+cb,10,cb_prem_dev15 +0.166 (100%),0.07,cb_prem_dev15 +0.120 (100%),0.0545,cb_prem_dev15 +0.063 (100%),0.0282,cb_prem_dev15 +0.053 (100%),0.0211
+xperp(other major perp),13,ethp_z10 +0.114 (100%),0.0826,ethp_z10 +0.070 (100%),0.0521,ethp_z10 +0.029 (100%),0.024,ethp_z3 +0.044 (92%),0.036
+swarm5,31,alt_swarm_breadth10 +0.114 (100%),0.0681,alt_swarm_breadth10 +0.071 (100%),0.0476,alt_swarm_breadth10 +0.029 (100%),0.022,alt_swarm_breadth10 +0.043 (100%),0.0261
+premium,2,prem_dev60 +0.037 (92%),0.033,prem_dev60 +0.028 (100%),0.025,prem_dev60 +0.011 (92%),0.0084,prem -0.010 (83%),0.009
+other_major_spot,26,e_r5z +0.103 (100%),0.0296,e_r10z +0.063 (100%),0.0246,be_r30z -0.028 (100%),0.0141,be_r10z -0.042 (100%),0.014
+perp_micro,92,f_imb5 +0.112 (100%),0.0066,f_imb10 +0.073 (100%),0.0036,f_imb10 +0.033 (100%),0.003,f_imb5 +0.037 (100%),0.0026
+spot_micro,83,s_imb5 +0.092 (100%),0.0063,s_imb5 +0.058 (100%),0.0033,s_imb5 +0.028 (100%),0.0038,s_imb5 +0.029 (92%),0.0043
+minute_state,64,absorb1m +0.053 (92%),0.0045,RF1 +0.038 (92%),0.0027,vwapdev60 -0.018 (100%),0.005,vwapdev60 -0.011 (100%),0.0031
+levy_own,15,levy_fflow60z +0.006 (67%),0.003,levy_fs30z -0.005 (67%),0.0019,levy_fsflow300z +0.004 (50%),0.0007,levy_fs30z -0.005 (83%),0.0017
+calendar,13,qh_x_R1 -0.010 (67%),0.0032,qh_after_x_R +0.009 (83%),0.0007,qh_x_R5 -0.006 (83%),0.0018,qh_x_R1 -0.009 (83%),0.0008
