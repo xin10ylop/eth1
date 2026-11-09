@@ -52,12 +52,13 @@ being more predictable intraday.
    source, exactly as for BTC.
 2. **The Coinbase ETH premium.** It is the only cross-asset family that is individually
    significant for ETH.
-3. **At 5 minutes, slow state features** (see §3). Unlike BTC, ETH's 5-minute forecasts improve
-   when the model can condition on the day-scale state.
-4. **Economically, the bp edge.** ETH moves more per minute, so a lower IC still buys a similar
-   edge in bp. On the DEV months, ETH spot +1 m earned 0.45 bp per forecast vs BTC's 0.43. That
-   cushion has been shrinking with the ETH/BTC volatility ratio (2.0× → 1.35×); see §6 for
-   the holdout.
+3. **Economically, the bp edge.** ETH moves more per minute, so each unit of IC buys more bp. On
+   the DEV months that made ETH spot +1 m earn 0.45 bp per forecast vs BTC's 0.43. On the 2026
+   holdout, with the ETH/BTC volatility ratio down to 1.35×, ETH only ties BTC at 10–15 s and
+   trails beyond (§6).
+
+A candidate fourth source, slow day-scale state features at 5 minutes, looked ETH-specific on
+the DEV months and was **rejected** on the confirmation months (§4).
 
 ## 1. Univariate evidence, ETH vs BTC (pre-holdout months, identical feature code)
 
@@ -238,4 +239,67 @@ arbitrage between venues is slowest: quiet markets, weekends, and Asia hours.
   across two minutes in klines. The live path uses klines only for history older than its
   per-second window. The score parity above shows the effect is negligible.
 
-<!-- live forward test section is completed after the live run -->
+## 8. Live: skew test and delivery latency (2026-11-09, real market, spot-only model)
+
+* **Skew test** (`scripts/live/live_skew_now.py 6 spot 2.0`). 6 live minutes were computed at
+  T+2 s, then recomputed 3 minutes later from final data.
+  * **No feature deviated** (rel. error > 1e-3).
+  * **All 42 model scores were bit-identical** (Δz = 0.0000). btc-predict reached 29/30 after its
+    skew fixes.
+  * The Coinbase rebuild-from-trades, the completeness barrier and the T+2.0 s fetch all carried
+    over. Log: `reports/live/skew_2026-11-09_spot.txt`.
+* **Delivery latency** is 2.4–5.3 s after the bar close (median ~3.5 s), slower than BTC's
+  ~2–3 s. Profiling (`build_features` with per-request timing) shows:
+  * Binance requests take ~0.2 s each, run concurrently, and the whole minute takes **0.4 s**
+    whenever Coinbase is ready.
+  * The rest is the **Coinbase completeness barrier**, which waits for a trade stamped ≥ T to
+    prove the last minute is complete.
+  * Coinbase ETH-USD trades 2–5 times per second, but its REST `/trades` endpoint publishes them
+    1–4 s late. A trade at T+0.18 s first appeared at T+3.8 s, with 14 trades already behind it.
+  * The barrier is what keeps skew at zero, so it stays.
+* **Next improvement:** a Coinbase websocket (`matches` channel) feeding the trades cache would
+  remove the wait (expected delivery ≈ T+2.4 s). That would recover roughly a quarter of the
+  1-minute edge (holdout spot +1 m IC is 0.038 at +2 s vs 0.025 at +5 s). It needs a new
+  dependency and a fresh parity + skew validation.
+
+## 9. Live forward test (2026-11-09, 13:08–14:14 UTC, spot-only model)
+
+67 consecutive live forecasts, made after all training data (models trained through 2026-11-02),
+with ETH ≈ $2,120 in a "stormy" regime (volatility 1.3× its 1-day median). Scored by
+`scripts/live/score_live_log.py` against Binance klines.
+
+| horizon | n | hit | IC | inside 80% band |
+|---|---|---|---|---|
+| 10 s | 61 | 57.4% | 0.41 | 77% |
+| 15 s | 65 | 61.5% | 0.37 | 89% |
+| 1 m | 67 | 53.7% | 0.29 | 82% |
+| 2 m | 67 | 58.2% | 0.15 | 82% |
+| 3 m | 67 | 52.2% | 0.18 | 82% |
+| 4 m | 67 | 59.7% | 0.24 | 87% |
+| 5 m | 67 | 58.2% | 0.29 | 87% |
+
+* All horizons are above 50% and have positive IC.
+* The regime-conditional 80% bands covered 77–89%.
+* Standard errors are ±6 pp on hit and ±0.13 on IC, and overlapping horizons share outcomes.
+* An interim look after ~40 minutes showed 59–70% hit rates. They fell back toward the holdout
+  as more minutes arrived, which is what sampling noise looks like.
+* Read this as **"the live pipeline works and the edge is positive and calibrated in
+  real-time conditions"**, not as a better estimate than the 260k-forecast holdout.
+
+Files: `reports/live/forward_test_2026-11-09_spot_{predictions.jsonl,score.txt}`.
+
+## 10. Overfitting safeguards actually used
+
+1. A 6-month **holdout** (2026-05 → 2026-10) that no design decision looked at.
+2. **Two-stage validation.** Every decision was made on three DEV months and then checked on
+   three untouched confirmation months. The 5-minute slow-feature "discovery" was caught exactly
+   there.
+3. **Paired day-block bootstrap** for every comparison (`scripts/research/compare_preds.py`).
+4. **Mechanism first, and BTC's conclusions as hypotheses only.** Every family was re-tested on
+   ETH. Two BTC conclusions did not transfer: BTC spot is a minor ingredient for ETH, and the
+   USDC book and 17-coin swarm add nothing.
+5. **Families, not columns.** Feature sets are generated from mechanism-defined families
+   (`scripts/research/make_family_sets.py`), so there was no column-level cherry-picking.
+6. Unchanged LightGBM hyper-parameters from btc-predict (no tuning on ETH at all), heavy
+   regularization, Huber loss, targets clipped at ±6σ.
+7. Live/training parity and real-market skew tests (§7, §8).

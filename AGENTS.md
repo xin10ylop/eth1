@@ -136,6 +136,9 @@ are the same (`eth`, `ethum`, `spot`, `um`, alts, `eth_premium`, `ethusdc`, `coi
 * BTC (btc-predict) is ahead on every hit rate. ETH ties it in bp edge only at 10–15 s.
 * The holdout was calm (ETH 1-min vol 6.9 bp vs 9.5 bp on DEV). Predictability roughly halves
   in the high-vol tercile.
+* Live: the skew test gave 42/42 bit-identical scores. In the 67-minute forward test (spot
+  model) all 7 horizons were above 50% with positive IC. Delivery is ~3.5 s after the bar close,
+  limited by Coinbase's REST trades lag.
 
 ## 8. Known limits
 * The full variant could not be live-tested from the build environment (futures REST
@@ -143,3 +146,5 @@ are the same (`eth`, `ethum`, `spot`, `um`, alts, `eth_premium`, `ethusdc`, `coi
 * Bands under-cover in strongly trending sessions.
 * The ETH perp target is only weakly predictable, because the ETH perp is where price discovery
   happens.
+* Live delivery waits 1–3 s for Coinbase's REST trades endpoint (completeness barrier). A
+  websocket feed would fix it, but needs a new parity + skew validation (FINDINGS §8).

@@ -75,6 +75,36 @@ is slowest.
 Round-trip taker costs are 4–10 bp. Details for every horizon:
 [`reports/holdout/edge_vs_costs.json`](reports/holdout/edge_vs_costs.json).
 
+### Live on the real market (2026-11-09, spot-only model)
+
+A **67-minute forward test** (13:08–14:14 UTC, made after all training data, ETH ≈ $2,120,
+stormy regime):
+
+| horizon | forecasts | hit | IC | inside 80% band |
+|---|---|---|---|---|
+| 10 s | 61 | 57.4% | 0.41 | 77% |
+| 15 s | 65 | 61.5% | 0.37 | 89% |
+| 1 m | 67 | 53.7% | 0.29 | 82% |
+| 2 m | 67 | 58.2% | 0.15 | 82% |
+| 3 m | 67 | 52.2% | 0.18 | 82% |
+| 4 m | 67 | 59.7% | 0.24 | 87% |
+| 5 m | 67 | 58.2% | 0.29 | 87% |
+
+All 7 horizons are above 50% with positive IC, and the 80% bands cover close to 80%. With ~65
+forecasts the hit-rate standard error is ±6 pp, and neighbouring forecasts share market moves,
+so this confirms *a positive, calibrated edge in live conditions*. It is not evidence for numbers
+above the holdout's. Logs: [`reports/live/`](reports/live/).
+
+* **Training/serving skew: none.** For 6 live minutes, features computed at T+2 s were compared
+  with the same minutes recomputed 3 minutes later from final data. No feature deviated, and
+  **42/42 model scores were bit-identical**
+  ([`reports/live/skew_2026-11-09_spot.txt`](reports/live/skew_2026-11-09_spot.txt)).
+* **Delivery: 2.4–5.3 s after the bar close (median ~3.5 s).** Binance data are final at
+  ~1.5–2 s and the computation itself takes 0.4 s. The rest is waiting for Coinbase's REST trades
+  endpoint, which publishes ETH-USD trades 1–4 s late, to prove the last minute is complete.
+  A Coinbase websocket feed is the obvious next improvement ([FINDINGS §8](docs/FINDINGS.md)).
+  It matters, because the 1-minute edge loses ~25% between +2 s and +5 s.
+
 ## Is ETH more predictable than BTC? What the data says, and why
 
 This was the starting hypothesis: ETH should be more predictable, because BTC leads and ETH
@@ -201,6 +231,21 @@ Everything else is one `make` target (`make help`):
 
 **New to the codebase, human or AI agent?** Start with [`AGENTS.md`](AGENTS.md). For internals,
 read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+Example output (a real forecast from the live forward test, spot-only model):
+
+```
+=== 2026-11-09 13:40:00 UTC   ETH spot 2,120.33   1m vol 6.3bp   regime normal (vol 1.10x 1-day median) ===
+target    P(up)  E[r] bp      80% band (bp)             price 80% band  conf% hit@conf,regime
+spot+10s  0.379    -0.77 [   -4.4,   +2.8] [    2,119.4,    2,120.9]     78           0.610
+spot+15s  0.414    -0.69 [   -5.2,   +3.6] [    2,119.2,    2,121.1]     70           0.601
+spot+1m   0.468    -0.49 [   -8.9,   +7.8] [    2,118.5,    2,122.0]     54           0.536
+spot+2m   0.473    -0.44 [  -12.5,  +11.4] [    2,117.7,    2,122.8]     52           0.534
+spot+3m   0.474    -0.42 [  -15.2,  +14.1] [    2,117.1,    2,123.3]     53           0.519
+spot+4m   0.478    -0.37 [  -17.3,  +16.4] [    2,116.7,    2,123.8]     46           0.514
+spot+5m   0.476    -0.40 [  -19.4,  +18.3] [    2,116.2,    2,124.2]     52           0.526
+(computed 3.19s after bar close)
+```
 
 ## Repository layout
 
